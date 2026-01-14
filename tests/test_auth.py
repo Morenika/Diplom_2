@@ -1,9 +1,7 @@
 import allure
-import requests
 
-
-def login_user(base_url, payload):
-    return requests.post(f"{base_url}/api/auth/login", json=payload)
+from api.auth_api import login_user
+from constants import LOGIN_ERROR_MESSAGE
 
 
 @allure.feature("Auth")
@@ -11,13 +9,13 @@ def login_user(base_url, payload):
 class TestLoginUser:
 
     @allure.title("Логин существующего пользователя — success=True, код 200")
-    def test_login_user_success(self, base_url, created_user):
+    def test_login_user_success(self, created_user):
         payload = {
             "email": created_user["payload"]["email"],
             "password": created_user["payload"]["password"],
         }
 
-        response = login_user(base_url, payload)
+        response = login_user(payload)
 
         assert response.status_code == 200
         data = response.json()
@@ -28,16 +26,16 @@ class TestLoginUser:
         assert data["user"]["email"] == payload["email"]
 
     @allure.title("Логин с неверным паролем — success=False, код 401")
-    def test_login_user_with_wrong_password(self, base_url, created_user):
+    def test_login_user_with_wrong_password(self, created_user):
         payload = {
             "email": created_user["payload"]["email"],
             "password": "wrong_password",
         }
 
-        response = login_user(base_url, payload)
+        response = login_user(payload)
 
         assert response.status_code == 401
         data = response.json()
 
         assert data["success"] is False
-        assert "message" in data
+        assert data["message"] == LOGIN_ERROR_MESSAGE
